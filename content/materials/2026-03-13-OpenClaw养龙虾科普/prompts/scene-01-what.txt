@@ -1,0 +1,3 @@
+Split screen comparison infographic, vertical layout top and bottom. Top half: a simple flat chat interface with speech bubbles, labeled "Only Talks", muted blue tones. Bottom half: a robotic arm typing on a keyboard with multiple holographic screens showing spreadsheets, code, and emails, labeled "Does the Work", vibrant red and cyan glow. Clean modern infographic style, dark background, digital art, 9:16 aspect ratio, 4K, sharp details, neon accents
+
+Negative: blurry, low quality, text errors, watermark, realistic photo, messy layout, cluttered, nsfw
