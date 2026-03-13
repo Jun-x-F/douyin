@@ -87,3 +87,89 @@
 - 节奏紧凑，避免冗余
 - 结尾必须有互动引导（关注/点赞/评论）
 - 遵守平台规则，不涉及敏感内容
+
+---
+
+## 增强能力备忘（未来配置参考）
+
+以下三项能力当前未启用，在项目发展到需要时参照配置。
+
+### A. Agent 子代理（`.claude/agents/`）
+
+**作用**：独立 AI 助手，有隔离上下文和定制工具。适合深度自治任务（深度调研、视频制作流水线），不占用主会话上下文。
+
+**配置方式**：在项目根目录创建 `.claude/agents/{name}.md`：
+```yaml
+---
+name: researcher
+description: 深度调研子代理，用于赛道分析和竞品拆解
+tools: Read, Grep, Glob, Bash, WebSearch, WebFetch
+model: sonnet
+---
+你是一个专业的短视频赛道分析师...（系统 prompt）
+```
+
+**可用字段**：
+
+| 字段 | 说明 |
+|------|------|
+| `name` | 代理名称 |
+| `description` | 描述和触发场景 |
+| `tools` | 允许使用的工具列表 |
+| `disallowedTools` | 禁止使用的工具 |
+| `model` | 模型：`sonnet`/`opus`/`haiku` |
+| `permissionMode` | 权限模式：`default`/`acceptEdits`/`dontAsk`/`plan` |
+| `maxTurns` | 最大执行轮次 |
+| `skills` | 预加载的 Skill |
+| `mcpServers` | 可用的 MCP 服务器 |
+| `memory` | 持久记忆：`user`/`project`/`local` |
+| `background` | `true` 后台运行 |
+| `isolation` | `worktree` 在隔离 git worktree 中运行 |
+
+**计划创建的 Agent**：
+- `researcher` — 深度调研（`model: sonnet`）
+- `scriptwriter` — 脚本生成（`model: opus`，最高创意质量）
+- `content-strategist` — 内容策略（`model: opus`, `memory: project`，跨会话积累知识）
+
+### B. References 参考资料
+
+**作用**：Skill 目录下的辅助文件，按需加载。解决 SKILL.md 过长问题，提供示例和参考库。
+
+**配置方式**：在 Skill 目录下放文件，在 SKILL.md 中引用：
+```
+script/
+├── SKILL.md
+├── references/
+│   ├── hook_patterns.md        # 爆款钩子模式库
+│   └── example_scripts/        # 优秀脚本示例
+└── scripts/
+    └── helper.py               # 辅助脚本
+```
+在 SKILL.md 中写：`详见 [hook_patterns.md](references/hook_patterns.md)`
+
+**计划创建的 References**：
+- `script/references/hook_patterns.md` — 50+ 爆款钩子模式
+- `script/references/example_scripts/` — 各类型优秀脚本示例
+- `cover/references/title_formulas.md` — 30+ 标题公式
+- `research/references/niche_taxonomy.md` — 赛道分类与评估框架
+
+### C. Skill Frontmatter 高级配置
+
+**所有可用字段**：
+
+| 字段 | 说明 |
+|------|------|
+| `name` | Skill 名称，决定 `/slash-command`（默认用文件夹名） |
+| `description` | 功能描述和触发场景 |
+| `argument-hint` | 参数提示，如 `[赛道名]` |
+| `disable-model-invocation` | `true` 阻止 Claude 自动触发（用于发布等有副作用的操作） |
+| `user-invocable` | `false` 隐藏斜杠菜单（仅作背景知识） |
+| `allowed-tools` | 限制可用工具，如 `Read, Grep, Glob` |
+| `model` | 指定模型 |
+| `context` | `fork` 在隔离子代理中运行 |
+| `agent` | `context: fork` 时的子代理类型 |
+
+**未来关键配置**：
+- `/publish`：需设 `disable-model-invocation: true`（防止自动发布）
+- `/pipeline`：可用 `context: fork` 委托子任务给 Agent
+- `/analytics`：可用 `allowed-tools: Read, Grep, Glob` 限制只读
