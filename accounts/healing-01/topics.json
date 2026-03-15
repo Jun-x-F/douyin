@@ -1,0 +1,55 @@
+{
+  "accountId": "healing-01",
+  "topics": [
+    {
+      "id": "topic-008",
+      "title": "30岁以后才明白的8个人生真相，第5条我后悔没早知道",
+      "type": "ai-graphic",
+      "status": "backlog",
+      "potential": "high",
+      "reason": "经典爆款选题结构：数字+悬念+年龄共鸣。覆盖25-35岁核心受众。AI图文+治愈配乐即可制作，全自动化。常青内容。",
+      "tags": ["人生感悟", "成长", "治愈", "自我提升"],
+      "timeliness": "evergreen",
+      "createdAt": "2026-03-13",
+      "assignedAt": "2026-03-15",
+      "scriptPath": null,
+      "materialPath": null,
+      "outputPath": null,
+      "publishId": null
+    },
+    {
+      "id": "topic-009",
+      "title": "心理学家说：频繁发朋友圈的人，内心深处都在渴望这一件事",
+      "type": "ai-graphic",
+      "status": "backlog",
+      "potential": "high",
+      "reason": "心理学+日常行为洞察，极易引发'被说中了'的共鸣感。悬念式标题引导点击。评论区讨论度高，利于互动率。",
+      "tags": ["心理学", "社交心理", "朋友圈", "深度分析"],
+      "timeliness": "evergreen",
+      "createdAt": "2026-03-13",
+      "assignedAt": "2026-03-15",
+      "scriptPath": null,
+      "materialPath": null,
+      "outputPath": null,
+      "publishId": null
+    },
+    {
+      "id": "topic-010",
+      "title": "当你觉得撑不下去的时候，请记住这3句话",
+      "type": "ai-graphic",
+      "status": "backlog",
+      "potential": "medium",
+      "reason": "治愈系经典选题，深夜发布效果极佳。情感共鸣类内容完播率高、转发率高。AI图文+温暖配乐，制作成本极低。",
+      "tags": ["治愈", "深夜", "情感语录", "正能量"],
+      "timeliness": "evergreen",
+      "createdAt": "2026-03-13",
+      "assignedAt": "2026-03-15",
+      "scriptPath": null,
+      "materialPath": null,
+      "outputPath": null,
+      "publishId": null
+    }
+  ],
+  "lastUpdated": "2026-03-15",
+  "nextId": 11
+}

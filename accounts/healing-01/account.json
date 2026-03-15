@@ -1,0 +1,30 @@
+{
+  "slug": "healing-01",
+  "name": "深夜治愈站",
+  "track": "emotion",
+  "status": "active",
+  "persona": "温暖治愈的心灵陪伴者，用心理学视角解读生活，真实感+克制表达",
+  "audience": "18-35岁，女性为主，二三线城市，深夜刷手机寻求慰藉的人",
+  "style": {
+    "tone": "温暖治愈、不过度煽情、平淡中击中人心",
+    "hook": "共情式开头，用'你是不是也...'引发共鸣",
+    "format": "AI图文为主，治愈插画+温暖配乐+字幕"
+  },
+  "tts": {
+    "voice": "zh-CN-XiaoyiNeural",
+    "rate": "+0%"
+  },
+  "publishing": {
+    "bestTimes": ["22:00", "23:00"],
+    "avoidTimes": ["06:00-10:00"],
+    "defaultTags": ["治愈", "心理学", "情感", "深夜", "成长"]
+  },
+  "stats": {
+    "totalPublished": 0,
+    "totalViews": 0,
+    "followers": 0,
+    "lastPublished": null,
+    "lastUpdated": "2026-03-15"
+  },
+  "createdAt": "2026-03-15"
+}

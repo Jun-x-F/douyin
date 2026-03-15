@@ -20,6 +20,13 @@
       "track": "knowledge",
       "status": "active",
       "createdAt": "2026-03-13"
+    },
+    {
+      "slug": "healing-01",
+      "name": "深夜治愈站",
+      "track": "emotion",
+      "status": "active",
+      "createdAt": "2026-03-15"
     }
   ],
   "lastUpdated": "2026-03-15"
