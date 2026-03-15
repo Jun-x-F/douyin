@@ -1,6 +1,7 @@
 ---
 name: material
 description: 根据视频脚本采集和生成素材，包括AI生图、配音文本提取、配乐推荐。使用场景：脚本完成后需要准备制作素材时触发。
+argument-hint: "[选题ID|脚本路径|批量] [--account slug]"
 ---
 
 # /material - 素材采集与生成
@@ -8,17 +9,29 @@ description: 根据视频脚本采集和生成素材，包括AI生图、配音�
 ## 描述
 根据视频脚本中的分镜描述，生成AI图片提示词、提取配音文本、整理配乐需求，输出可直接用于视频制作的素材清单。
 
+## 账号感知
+
+本 Skill 在指定账号的上下文中运行：
+- 通过 `--account {slug}` 参数指定账号
+- 或使用当前会话中 `/account 切换` 设定的活跃账号
+- 如果 `data/matrix.json` 中只有一个 active 账号，自动使用该账号
+
+**账号上下文决定**：
+- 从 `accounts/{slug}/topics.json` 查找选题和脚本路径
+- 从 `accounts/{slug}/account.json` 读取 TTS 配置（音色、语速）
+- 素材输出到 `accounts/{slug}/content/materials/`
+
 ## 使用方式
 - `/material {脚本路径}` — 为指定脚本生成素材清单
 - `/material {选题ID}` — 根据选题ID查找对应脚本并生成素材
-- `/material 批量` — 为所有 in-progress 状态的选题生成素材
+- `/material 批量` — 为所有 scripted 状态的选题生成素材
 
 ## 执行流程
 
 ### 1. 读取脚本
-- 如果给了路径，直接读取脚本文件
-- 如果给了选题ID，在 `data/topics/backlog.json` 查找标题，再在 `content/scripts/` 目录下匹配脚本文件
-- 如果用 `批量`，扫描所有 in-progress 选题对应的脚本
+- 如果给了选题ID，在 `accounts/{slug}/topics.json` 中查找，获取 `scriptPath`
+- 读取 `accounts/{slug}/{scriptPath}` 获取脚本内容
+- 如果用 `批量`，扫描所有 status="scripted" 的选题
 
 ### 2. 解析分镜
 从脚本中提取每个分镜的：
@@ -29,89 +42,45 @@ description: 根据视频脚本采集和生成素材，包括AI生图、配音�
 
 ### 3. 生成素材清单
 
-为每个脚本输出一个素材清单文件，保存到 `content/materials/YYYY-MM-DD-{标题}/manifest.md`：
-
-```markdown
-# 素材清单
-
-## 基本信息
-- **脚本来源**：{脚本路径}
-- **分镜数量**：{N}
-- **生成日期**：{YYYY-MM-DD}
-
-## AI生图任务
-
-### 场景1：{场景描述}
-- **提示词**：{英文prompt，已优化}
-- **负面提示词**：{negative prompt}
-- **推荐尺寸**：9:16（竖屏）
-- **推荐工具**：即梦 / Midjourney / DALL-E
-- **输出路径**：images/scene-01.png
-
-### 场景2：...
-
-## 配音文本（TTS用）
-
-完整的连贯配音文本，可直接粘贴到TTS工具：
-
-```
-{所有配音文本按顺序拼接，每幕之间空一行}
-```
-
-## 配乐需求
-- **风格**：{从脚本提取}
-- **节奏**：{BPM}
-- **推荐搜索关键词**：{关键词}
-- **推荐来源**：抖音音乐库 / Pixabay / Suno AI生成
-
-## 字幕文件（SRT格式草稿）
-
-```srt
-1
-00:00:00,000 --> 00:00:03,000
-{钩子文本}
-
-2
-00:00:03,000 --> 00:00:XX,000
-{第1幕文本}
-...
-```
-```
+保存到 `accounts/{slug}/content/materials/YYYY-MM-DD-{标题}/manifest.md`
 
 ### 4. 优化AI生图提示词
-对脚本中的画面描述进行优化：
 - 确保使用英文
-- 添加风格关键词（如 digital art, cinematic lighting, 4K, detailed）
-- 添加负面提示词（如 blurry, low quality, text, watermark）
-- 统一视觉风格（同一视频的所有图片保持一致的美术风格）
-- 添加竖屏构图提示（vertical composition, portrait orientation, 9:16 aspect ratio）
+- 添加风格关键词（digital art, cinematic lighting, 4K, detailed）
+- 添加负面提示词（blurry, low quality, text, watermark）
+- 统一视觉风格
+- 添加竖屏构图提示（vertical composition, 9:16 aspect ratio）
 
 ### 5. 生成TTS配音文本
 - 将所有分镜的配音文本按顺序拼接
-- 标注停顿位置（用 `...` 表示）
-- 标注语气变化（用 `【加重】` `【放慢】` `【兴奋】` 等标记）
-- 输出可直接粘贴到TTS工具的纯文本
+- 标注停顿位置（`...`）
+- 标注语气变化（`【加重】` `【放慢】` `【兴奋】`）
+- **TTS 音色参考**：从 `accounts/{slug}/account.json` 的 `tts` 字段读取推荐音色
+- 输出到 `accounts/{slug}/content/materials/YYYY-MM-DD-{标题}/tts-text.txt`
 
 ### 6. 生成字幕草稿
-- 根据预估时长分配每条字幕的时间码
-- 输出SRT格式，可直接导入剪辑软件
+- 根据预估时长分配时间码
+- 输出 SRT 格式到 `accounts/{slug}/content/materials/YYYY-MM-DD-{标题}/subtitles.srt`
+
+### 7. 更新选题状态
+- 将选题状态更新为 `material-ready`
+- 更新 `materialPath` 字段
 
 ## 输出结构
 
 ```
-content/materials/YYYY-MM-DD-{标题}/
+accounts/{slug}/content/materials/YYYY-MM-DD-{标题}/
 ├── manifest.md          # 素材清单总览
-├── prompts/             # AI生图提示词（每个场景一个txt）
-│   ├── scene-01.txt
-│   ├── scene-02.txt
+├── prompts/             # AI生图提示词
+│   ├── scene-00-hook.txt
+│   ├── scene-01-xxx.txt
 │   └── ...
 ├── tts-text.txt         # TTS配音完整文本
 └── subtitles.srt        # 字幕草稿
 ```
 
 ## 注意事项
-- AI生图提示词要尽可能详细，减少生成时的不确定性
-- 同一视频的所有图片应保持一致的视觉风格和色调
-- TTS文本要口语化，避免生硬的书面语
+- AI生图提示词要尽可能详细
+- 同一视频所有图片保持一致的视觉风格和色调
+- TTS文本要口语化
 - 字幕时间码是预估值，实际制作时需根据配音时长微调
-- 如果脚本中有需要实拍或外部素材的内容，在清单中标注"需手动获取"

@@ -4,37 +4,66 @@
 
 这是一个从调研到全自动发布的抖音短视频副业项目，目标是通过系统化的内容生产流程实现高收益。
 
-项目通过 Claude Code Skills 驱动各环节，形成完整的内容生产流水线。
+项目通过 Claude Code Skills 驱动各环节，形成完整的内容生产流水线。支持**矩阵化多账号运营**，每个账号独立管理选题、内容和发布。
 
-## 账号定位
+## 矩阵架构
+
+### 核心概念
+
+- **赛道 (Track)**：内容方向分类，定义在 `data/matrix.json`
+- **账号 (Account)**：每个抖音账号对应一个 `accounts/{slug}/` 目录，拥有独立的选题库、内容和发布历史
+- **严格隔离**：不同账号之间不共享脚本和素材
+- **去重机制**：同账号内通过标题相似度和脚本哈希防止重复发布
+
+### 目录结构
+
+```
+accounts/{slug}/                  # 每个账号独立目录
+├── account.json                  # 账号配置（人设/风格/TTS音色/发布设置）
+├── topics.json                   # 选题库（5级状态流转）
+├── published.json                # 发布历史 + 去重指纹
+└── content/
+    ├── scripts/                  # 脚本
+    ├── materials/                # 素材（图片提示词/TTS文本/字幕）
+    └── output/                   # 成品视频 + 发布元数据
+```
+
+### 选题状态流转
+
+```
+backlog → scripted → material-ready → produced → published
+```
+
+### 全局数据
+
+| 文件 | 作用 |
+|------|------|
+| `data/matrix.json` | 赛道定义 + 账号注册表 |
+| `data/dedup/fingerprints.json` | 全局去重指纹库 |
+| `data/research/` | 调研报告（所有账号共享） |
+| `templates/` | 脚本模板（所有账号共享） |
+
+## 赛道定位
 
 > 基于 2026-03-13 全赛道调研确定（详见 `data/research/2026-03-13-全赛道对比调研.md`）
+> 赛道和账号详情见 `data/matrix.json` 和 `accounts/{slug}/account.json`
 
 ### 主赛道：知识/教程（AI工具教学）
-
-- **赛道方向**：AI工具教学 / 效率提升 / 副业技能
-- **目标受众**：18-35岁，对AI工具感兴趣的职场人、学生、副业探索者
-- **账号人设**：AI效率达人，专注分享最新、最实用的AI工具和副业方法
-- **内容风格**：实用干货为主，"先抛问题再给方案"，信息密度高，节奏紧凑
-- **差异化定位**：聚焦"普通人可操作"的AI实战教程，不讲概念只讲实操
-- **视频形式**：AI图文（全自动化程度最高）
-- **变现路径**：知识付费课程 > 星图商单 > 电商带货 > 平台创作激励
+- 账号：`ai-tools-01`
+- 方向：AI工具教学 / 效率提升 / 副业技能
+- 风格：实用干货，信息密度高，节奏紧凑
+- 变现：知识付费 > 星图商单 > 电商带货
 
 ### 辅赛道：情感/心理（治愈语录）
-
-- **赛道方向**：自我成长 / 职场心理 / 深夜治愈
-- **目标受众**：18-35岁，女性为主，二三线城市
-- **账号人设**：温暖治愈的心灵陪伴者
-- **内容风格**：真实感+克制表达，不过度煽情，平淡中击中人心
-- **差异化定位**：心理学视角+生活洞察，区别于纯鸡汤语录
-- **视频形式**：AI图文（语录图片+TTS配音+治愈配乐）
-- **变现路径**：书单带货 > 情绪好物 > 小程序推广 > 知识付费
+- 账号：待创建（`healing-01`）
+- 方向：自我成长 / 职场心理 / 深夜治愈
+- 风格：真实感+克制表达，心理学视角
+- 变现：书单带货 > 情绪好物 > 小程序推广
 
 ### 探索赛道：AI音乐
-
-- **赛道方向**：AI音乐创作与翻唱
-- **视频形式**：AI图文 / 混剪
-- **变现路径**：流媒体分成 + 短视频推广（待验证）
+- 账号：待创建（`ai-music-01`）
+- 方向：AI音乐创作与翻唱
+- 变现：流媒体分成 + 短视频推广（待验证）
 
 ## 视频形式
 
@@ -49,46 +78,62 @@
 
 ## 工作流程
 
-标准内容生产流程（每个环节对应一个 Skill）：
+### 矩阵化内容生产流程
 
 ```
-/research 调研分析 → /topic 选题策划 → /script 脚本编写
-    → /material 素材采集 → /produce 视频制作
-    → /cover 封面标题 → /publish 发布管理
-    → /analytics 数据分析 → /optimize 优化迭代
+/account 切换 {slug}       ← 选择目标账号
+    → /research 调研分析    ← 全局共享
+    → /topic 选题策划       ← 写入账号选题库（自动去重）
+    → /script 脚本编写      ← 存入账号 content/scripts/
+    → /material 素材采集    ← 存入账号 content/materials/
+    → /produce 视频制作     ← 存入账号 content/output/
+    → assemble.py --account {slug}  ← 自动组装成品
+    → 手动发布到抖音
 ```
 
 ## Skill 使用指南
 
-### P0 核心能力（已实现）
+### P0 核心能力（已实现，账号感知）
 
 | 命令 | 功能 | 示例用法 |
 |------|------|---------|
-| `/research` | 赛道调研、竞品分析、关键词挖掘 | `/research` 或 `/research 知识赛道` |
-| `/topic` | 热点选题、选题库管理 | `/topic` 生成选题 或 `/topic 更新状态` |
+| `/account` | 矩阵账号管理 | `/account` 列表 或 `/account 切换 ai-tools-01` |
+| `/research` | 赛道调研、竞品分析 | `/research` 或 `/research 知识赛道` |
+| `/topic` | 热点选题、选题库管理 | `/topic` 生成选题 或 `/topic 列表` |
 | `/script` | 多形式脚本生成 | `/script AI图文 选题标题` |
 
-### P1 生产能力（部分已实现）
+### P1 生产能力（已实现，账号感知）
 
-| 命令 | 功能 | 状态 | 示例用法 |
-|------|------|------|---------|
-| `/material` | AI生图提示词、配音文本、字幕生成 | ✅ 已实现 | `/material topic-001` |
-| `/produce` | 视频组装指引、发布元数据生成 | ✅ 已实现 | `/produce topic-001` |
-| `/cover` | 封面设计与标题优化 | 待实现 | - |
-| `/publish` | 发布管理与排期 | 待实现 | - |
-| `/analytics` | 数据分析与复盘 | 待实现 | - |
+| 命令 | 功能 | 示例用法 |
+|------|------|---------|
+| `/material` | AI生图提示词、配音文本、字幕生成 | `/material topic-001` |
+| `/produce` | 视频组装指引、发布元数据生成 | `/produce topic-001` |
 
-### P2 增长能力（待实现）
+### 自动化工具
 
-`/optimize` `/monetize` `/pipeline`
+```bash
+# 视频自动组装（TTS + 动效 + 字幕 + BGM → MP4）
+python scripts/assemble.py --account ai-tools-01 topic-001
+```
+
+### P2 待实现
+
+| 命令 | 功能 |
+|------|------|
+| `/cover` | 封面设计与标题优化 |
+| `/publish` | 发布管理与排期 |
+| `/analytics` | 数据分析与复盘 |
+| `/optimize` | 优化迭代 |
 
 ## 数据规范
 
 ### 文件命名
 - 调研报告：`data/research/YYYY-MM-DD-{主题}.md`
-- 视频脚本：`content/scripts/YYYY-MM-DD-{标题}.md`
+- 视频脚本：`accounts/{slug}/content/scripts/YYYY-MM-DD-{标题}.md`
+- 素材目录：`accounts/{slug}/content/materials/YYYY-MM-DD-{标题}/`
+- 成品输出：`accounts/{slug}/content/output/YYYY-MM-DD-{标题}.mp4`
 
-### 选题库格式 (`data/topics/backlog.json`)
+### 选题库格式 (`accounts/{slug}/topics.json`)
 
 ```json
 {
@@ -97,14 +142,20 @@
       "id": "topic-001",
       "title": "选题标题",
       "type": "ai-graphic | mashup | recreation | oral",
-      "status": "backlog | in-progress | published",
+      "status": "backlog | scripted | material-ready | produced | published",
       "potential": "high | medium | low",
       "reason": "推荐理由",
+      "tags": ["标签1", "标签2"],
+      "timeliness": "evergreen | hot-until-YYYY-MM-DD",
       "createdAt": "2026-03-13",
-      "tags": ["标签1", "标签2"]
+      "scriptPath": "content/scripts/YYYY-MM-DD-xxx.md",
+      "materialPath": "content/materials/YYYY-MM-DD-xxx/",
+      "outputPath": "content/output/YYYY-MM-DD-xxx.mp4",
+      "publishId": null
     }
   ],
-  "lastUpdated": "2026-03-13"
+  "lastUpdated": "2026-03-13",
+  "nextId": 2
 }
 ```
 

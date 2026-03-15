@@ -3,11 +3,20 @@
 视频自动组装脚本
 
 用法:
-    python scripts/assemble.py content/materials/2026-03-13-OpenClaw养龙虾科普/
+    # 矩阵模式（推荐）：指定账号 + 选题ID
+    python scripts/assemble.py --account ai-tools-01 topic-001
+
+    # 矩阵模式：指定账号 + 素材目录名
+    python scripts/assemble.py --account ai-tools-01 2026-03-13-OpenClaw养龙虾科普
+
+    # 兼容模式：直接传素材目录路径
+    python scripts/assemble.py accounts/ai-tools-01/content/materials/2026-03-13-OpenClaw养龙虾科普/
 
 功能: TTS配音 → 图片动效 → 字幕烧录 → BGM混音 → 导出成品MP4
 """
 
+import argparse
+import json
 import subprocess
 import sys
 import re
@@ -16,8 +25,9 @@ import shutil
 import tempfile
 from pathlib import Path
 
+PROJECT_ROOT = Path(__file__).resolve().parent.parent
 
-# ── 配置 ──────────────────────────────────────────────
+# ── 配置（默认值，可被 account.json 覆盖）──────────────
 
 TTS_VOICE = "zh-CN-YunxiNeural"
 TTS_RATE = "+10%"
@@ -95,7 +105,56 @@ def clean_tts_text(text: str) -> str:
     return '\n'.join(cleaned_lines)
 
 
-def generate_tts(material_dir: Path) -> Path:
+def load_account_config(account_slug: str) -> dict | None:
+    """从 accounts/{slug}/account.json 加载账号配置"""
+    account_path = PROJECT_ROOT / "accounts" / account_slug / "account.json"
+    if not account_path.exists():
+        return None
+    with open(account_path, encoding="utf-8") as f:
+        return json.load(f)
+
+
+def resolve_material_dir(account_slug: str | None, target: str) -> Path:
+    """解析素材目录路径"""
+    # 如果指定了账号
+    if account_slug:
+        account_dir = PROJECT_ROOT / "accounts" / account_slug
+        if not account_dir.exists():
+            print(f"错误: 账号 {account_slug} 不存在")
+            sys.exit(1)
+
+        # 如果 target 是选题ID（如 topic-001），从 topics.json 查找
+        if target.startswith("topic-"):
+            topics_path = account_dir / "topics.json"
+            if topics_path.exists():
+                with open(topics_path, encoding="utf-8") as f:
+                    topics_data = json.load(f)
+                for topic in topics_data.get("topics", []):
+                    if topic["id"] == target and topic.get("materialPath"):
+                        material_dir = account_dir / topic["materialPath"]
+                        if material_dir.exists():
+                            return material_dir
+            print(f"错误: 找不到选题 {target} 的素材目录")
+            sys.exit(1)
+
+        # 否则当作素材目录名
+        material_dir = account_dir / "content" / "materials" / target
+        if material_dir.exists():
+            return material_dir
+
+        print(f"错误: 目录不存在 {material_dir}")
+        sys.exit(1)
+
+    # 兼容模式：直接传路径
+    material_dir = Path(target).resolve()
+    if material_dir.is_dir():
+        return material_dir
+
+    print(f"错误: 目录不存在 {material_dir}")
+    sys.exit(1)
+
+
+def generate_tts(material_dir: Path, voice: str = TTS_VOICE, rate: str = TTS_RATE) -> Path:
     """生成 TTS 配音文件"""
     tts_text_path = material_dir / "tts-text.txt"
     audio_dir = material_dir / "audio"
@@ -117,11 +176,11 @@ def generate_tts(material_dir: Path) -> Path:
     tmp_text = material_dir / "audio" / "_tts_clean.txt"
     tmp_text.write_text(clean_text, encoding='utf-8')
 
-    print("  正在生成 TTS 配音...")
+    print(f"  正在生成 TTS 配音 (音色: {voice}, 语速: {rate})...")
     cmd = [
         "edge-tts",
-        "--voice", TTS_VOICE,
-        "--rate", TTS_RATE,
+        "--voice", voice,
+        "--rate", rate,
         "--file", str(tmp_text),
         "--write-media", str(output_path),
     ]
@@ -255,45 +314,83 @@ def create_scene_clip(
 
 # ── 视频组装 ──────────────────────────────────────────
 
-def assemble_video(material_dir: Path):
+def assemble_video(material_dir: Path, tts_voice: str = TTS_VOICE, tts_rate: str = TTS_RATE):
     """完整组装流程"""
     images_dir = material_dir / "images"
     audio_dir = material_dir / "audio"
     srt_path = material_dir / "subtitles.srt"
     bgm_path = audio_dir / "bgm.mp3"
 
-    # 确定输出路径
+    # 确定输出路径（相对于素材目录的 content/ 层级）
     dir_name = material_dir.name  # 如 "2026-03-13-OpenClaw养龙虾科普"
     output_dir = material_dir.parent.parent / "output"
     output_dir.mkdir(exist_ok=True)
     output_path = output_dir / f"{dir_name}.mp4"
 
-    # 检查图片
+    # 自动检测场景图片（不依赖硬编码的 SCENE_FILES）
     print("\n[1/5] 检查场景图片...")
     scene_images = []
     missing = []
-    for name in SCENE_FILES:
-        img = find_scene_image(images_dir, name)
-        if img:
-            scene_images.append(img)
-            print(f"  ✓ {img.name}")
-        else:
-            missing.append(name)
-            print(f"  ✗ {name}.png (缺失)")
 
-    if missing:
-        print(f"\n缺少 {len(missing)} 张图片，请先生成后放入 {images_dir}/")
+    # 先尝试从 images/ 目录自动发现 scene-XX 文件
+    if images_dir.exists():
+        found = {}
+        for ext in ["png", "jpg", "jpeg", "webp"]:
+            for f in images_dir.glob(f"scene-*.{ext}"):
+                # 提取场景编号，如 scene-00-hook.png → 00
+                match = re.match(r"scene-(\d+)", f.stem)
+                if match:
+                    idx = int(match.group(1))
+                    if idx not in found:
+                        found[idx] = f
+        for idx in sorted(found.keys()):
+            scene_images.append(found[idx])
+            print(f"  ✓ {found[idx].name}")
+
+    if not scene_images:
+        # 回退到硬编码列表
+        for name in SCENE_FILES:
+            img = find_scene_image(images_dir, name)
+            if img:
+                scene_images.append(img)
+                print(f"  ✓ {img.name}")
+            else:
+                missing.append(name)
+                print(f"  ✗ {name}.png (缺失)")
+
+    if not scene_images:
+        print(f"\n没有找到场景图片，请先生成后放入 {images_dir}/")
         print("文件名格式: scene-XX-xxx.png (支持 png/jpg/webp)")
         sys.exit(1)
 
+    print(f"  共找到 {len(scene_images)} 张场景图片")
+
     # TTS 配音
     print("\n[2/5] 生成 TTS 配音...")
-    voiceover_path = generate_tts(material_dir)
+    voiceover_path = generate_tts(material_dir, voice=tts_voice, rate=tts_rate)
     total_duration = get_duration(voiceover_path)
     print(f"  配音时长: {total_duration:.1f} 秒")
 
-    # 计算场景时长
-    durations = calculate_scene_durations(total_duration)
+    # 计算场景时长（动态适配图片数量）
+    n_scenes = len(scene_images)
+    if n_scenes == len(SCENE_RATIOS):
+        durations = calculate_scene_durations(total_duration)
+    else:
+        # 第一张 3 秒比例，其余均分
+        ratios = [3] + [15] * (n_scenes - 1) if n_scenes > 1 else [1]
+        ratio_sum = sum(ratios)
+        durations = [total_duration * r / ratio_sum for r in ratios]
+
+    # 动态适配动效
+    if n_scenes == len(SCENE_EFFECTS):
+        effects = SCENE_EFFECTS
+    else:
+        effects = [SCENE_EFFECTS[0]]  # 第一张用快速放大
+        for i in range(1, n_scenes):
+            effects.append(SCENE_EFFECTS[min(i, len(SCENE_EFFECTS) - 2)])
+        if n_scenes > 1:
+            effects[-1] = SCENE_EFFECTS[-1]  # 最后一张用静态
+
     print("\n[3/5] 生成场景视频片段（Ken Burns 动效）...")
     for i, (img, dur) in enumerate(zip(scene_images, durations)):
         print(f"  场景{i}: {img.name} ({dur:.1f}s)")
@@ -302,7 +399,7 @@ def assemble_video(material_dir: Path):
     tmp_dir = Path(tempfile.mkdtemp(prefix="douyin_assemble_"))
     clip_paths = []
 
-    for i, (img, dur, effect) in enumerate(zip(scene_images, durations, SCENE_EFFECTS)):
+    for i, (img, dur, effect) in enumerate(zip(scene_images, durations, effects)):
         clip_path = tmp_dir / f"clip_{i:02d}.mp4"
         print(f"  正在处理场景{i}...", end=" ", flush=True)
         create_scene_clip(
@@ -416,28 +513,43 @@ def assemble_video(material_dir: Path):
     print(f"  时长: {final_duration:.1f} 秒")
     print(f"  大小: {file_size_mb:.1f} MB")
     print(f"{'='*50}")
-    print(f"\n下一步: 将视频上传到抖音，发布信息见 content/output/{dir_name}-meta.md")
+    meta_path = output_dir / f"{dir_name}-meta.md"
+    meta_hint = f"  发布信息: {meta_path}" if meta_path.exists() else ""
+    if meta_hint:
+        print(meta_hint)
+    print(f"\n下一步: 将视频上传到抖音发布")
 
 
 # ── 入口 ──────────────────────────────────────────────
 
 def main():
-    if len(sys.argv) < 2:
-        print("用法: python scripts/assemble.py <素材目录>")
-        print("示例: python scripts/assemble.py content/materials/2026-03-13-OpenClaw养龙虾科普/")
-        sys.exit(1)
+    parser = argparse.ArgumentParser(description="视频自动组装脚本")
+    parser.add_argument("target", help="素材目录路径、素材目录名、或选题ID (如 topic-001)")
+    parser.add_argument("--account", "-a", help="账号 slug (如 ai-tools-01)")
+    args = parser.parse_args()
 
-    material_dir = Path(sys.argv[1]).resolve()
-    if not material_dir.is_dir():
-        print(f"错误: 目录不存在 {material_dir}")
-        sys.exit(1)
+    # 解析素材目录
+    material_dir = resolve_material_dir(args.account, args.target)
 
-    print(f"视频自动组装")
+    # 加载账号 TTS 配置
+    tts_voice = TTS_VOICE
+    tts_rate = TTS_RATE
+    account_name = ""
+
+    if args.account:
+        config = load_account_config(args.account)
+        if config:
+            tts_conf = config.get("tts", {})
+            tts_voice = tts_conf.get("voice", TTS_VOICE)
+            tts_rate = tts_conf.get("rate", TTS_RATE)
+            account_name = f" [{config.get('name', args.account)}]"
+
+    print(f"视频自动组装{account_name}")
     print(f"素材目录: {material_dir.name}")
     print(f"{'='*50}")
 
     check_dependencies()
-    assemble_video(material_dir)
+    assemble_video(material_dir, tts_voice=tts_voice, tts_rate=tts_rate)
 
 
 if __name__ == "__main__":

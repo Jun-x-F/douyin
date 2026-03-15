@@ -1,0 +1,35 @@
+{
+  "slug": "ai-tools-01",
+  "name": "AI效率达人",
+  "track": "knowledge",
+  "persona": "专注分享最新、最实用的AI工具和副业方法",
+  "audience": "18-35岁，对AI工具感兴趣的职场人、学生、副业探索者",
+  "style": {
+    "tone": "实用干货，信息密度高，节奏紧凑",
+    "hook": "先抛问题再给方案",
+    "format": "ai-graphic"
+  },
+  "tts": {
+    "voice": "zh-CN-YunxiNeural",
+    "rate": "+10%"
+  },
+  "publishing": {
+    "bestTimes": [
+      "12:00-13:00",
+      "20:00-22:00"
+    ],
+    "avoidTimes": [
+      "周末上午"
+    ],
+    "defaultTags": [
+      "#AI工具",
+      "#AI教程",
+      "#效率"
+    ]
+  },
+  "stats": {
+    "totalPublished": 0,
+    "totalViews": 0,
+    "avgCompletionRate": 0
+  }
+}

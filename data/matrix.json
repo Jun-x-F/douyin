@@ -1,0 +1,26 @@
+{
+  "tracks": {
+    "knowledge": {
+      "name": "知识/教程",
+      "description": "AI工具教学 / 效率提升 / 副业技能"
+    },
+    "emotion": {
+      "name": "情感/心理",
+      "description": "自我成长 / 职场心理 / 深夜治愈"
+    },
+    "ai-music": {
+      "name": "AI音乐",
+      "description": "AI音乐创作与翻唱"
+    }
+  },
+  "accounts": [
+    {
+      "slug": "ai-tools-01",
+      "name": "AI效率达人",
+      "track": "knowledge",
+      "status": "active",
+      "createdAt": "2026-03-13"
+    }
+  ],
+  "lastUpdated": "2026-03-15"
+}

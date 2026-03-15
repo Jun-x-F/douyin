@@ -1,0 +1,147 @@
+{
+  "topics": [
+    {
+      "id": "topic-001",
+      "title": "全网都在'养龙虾'！OpenClaw到底是什么？3分钟看懂这个让全民疯狂的AI智能体",
+      "type": "ai-graphic",
+      "status": "material-ready",
+      "potential": "high",
+      "reason": "OpenClaw'养虾'是2026年3月最大的全民热点，#养龙虾 话题持续霸榜。结合热点+AI教学双重流量密码，极易爆款。时效性强，需尽快发布。",
+      "tags": [
+        "OpenClaw",
+        "养龙虾",
+        "AI智能体",
+        "科技热点"
+      ],
+      "timeliness": "hot-until-2026-03-25",
+      "createdAt": "2026-03-13",
+      "scriptPath": "content/scripts/2026-03-13-OpenClaw养龙虾科普.md",
+      "materialPath": "content/materials/2026-03-13-OpenClaw养龙虾科普/",
+      "outputPath": "content/output/2026-03-13-OpenClaw养龙虾科普.mp4",
+      "publishId": null
+    },
+    {
+      "id": "topic-002",
+      "title": "第一批'养虾人'已经开始卸载了！OpenClaw的5个坑，入手前必看",
+      "type": "ai-graphic",
+      "status": "material-ready",
+      "potential": "high",
+      "reason": "'养虾翻车'话题已上热搜，反向内容（避坑指南）往往比正向教程流量更高。利用争议热点，引发评论区讨论。",
+      "tags": [
+        "OpenClaw",
+        "养龙虾",
+        "AI避坑",
+        "热搜"
+      ],
+      "timeliness": "hot-until-2026-03-20",
+      "createdAt": "2026-03-13",
+      "scriptPath": "content/scripts/2026-03-13-养虾避坑指南.md",
+      "materialPath": "content/materials/2026-03-13-养虾避坑指南/",
+      "outputPath": "content/output/2026-03-13-养虾避坑指南.mp4",
+      "publishId": null
+    },
+    {
+      "id": "topic-003",
+      "title": "2026年最强AI工具排行榜：豆包月活暴涨87%，千问增长553%，到底该用哪个？",
+      "type": "ai-graphic",
+      "status": "backlog",
+      "potential": "high",
+      "reason": "基于AICPB 2月最新数据，盘点类内容信息密度高、收藏率高。国产AI崛起是大众关注焦点，数据对比类内容天然有争议和讨论空间。",
+      "tags": [
+        "AI工具",
+        "豆包",
+        "千问",
+        "DeepSeek",
+        "ChatGPT"
+      ],
+      "timeliness": "hot-until-2026-04-15",
+      "createdAt": "2026-03-13",
+      "scriptPath": null,
+      "materialPath": null,
+      "outputPath": null,
+      "publishId": null
+    },
+    {
+      "id": "topic-004",
+      "title": "ChatGPT用户集体出逃！下载量暴跌背后，这3个替代工具免费又好用",
+      "type": "ai-graphic",
+      "status": "backlog",
+      "potential": "high",
+      "reason": "ChatGPT因与美国国防部合作引发卸载潮是3月初热点。推荐免费国产替代工具（豆包/千问/DeepSeek），实用性+争议性并存。",
+      "tags": [
+        "ChatGPT",
+        "AI替代",
+        "免费AI",
+        "国产AI"
+      ],
+      "timeliness": "hot-until-2026-03-30",
+      "createdAt": "2026-03-13",
+      "scriptPath": null,
+      "materialPath": null,
+      "outputPath": null,
+      "publishId": null
+    },
+    {
+      "id": "topic-005",
+      "title": "用AI做副业，我一个月赚了XXX元：普通人可复制的5条AI赚钱路径",
+      "type": "ai-graphic",
+      "status": "backlog",
+      "potential": "high",
+      "reason": "副业赚钱是抖音永恒的流量密码。结合AI工具实操，信息差价值极高。'先抛问题再给方案'的结构天然适合高完播率。常青内容可长期获取搜索流量。",
+      "tags": [
+        "AI副业",
+        "赚钱",
+        "AI工具",
+        "副业收入"
+      ],
+      "timeliness": "evergreen",
+      "createdAt": "2026-03-13",
+      "scriptPath": null,
+      "materialPath": null,
+      "outputPath": null,
+      "publishId": null
+    },
+    {
+      "id": "topic-006",
+      "title": "别再花钱买课了！这5个免费AI工具，让你的工作效率翻3倍",
+      "type": "ai-graphic",
+      "status": "backlog",
+      "potential": "high",
+      "reason": "'免费'+'效率'是知识赛道双重钩子。反对付费课程的立场容易引发共鸣和转发。实用工具推荐类内容收藏率极高，利于长尾流量。",
+      "tags": [
+        "免费AI",
+        "效率工具",
+        "办公提效",
+        "工具推荐"
+      ],
+      "timeliness": "evergreen",
+      "createdAt": "2026-03-13",
+      "scriptPath": null,
+      "materialPath": null,
+      "outputPath": null,
+      "publishId": null
+    },
+    {
+      "id": "topic-007",
+      "title": "Suno V5来了！1分钟做出专业级歌曲，AI音乐到底有多离谱",
+      "type": "ai-graphic",
+      "status": "backlog",
+      "potential": "medium",
+      "reason": "Suno V5发布是AI音乐领域大事件，抖音AI翻唱内容持续爆火。展示AI能力的'震撼感'内容天然高传播。作为探索赛道（AI音乐）的试水内容。",
+      "tags": [
+        "Suno",
+        "AI音乐",
+        "AI翻唱",
+        "音乐制作"
+      ],
+      "timeliness": "hot-until-2026-04-15",
+      "createdAt": "2026-03-13",
+      "scriptPath": null,
+      "materialPath": null,
+      "outputPath": null,
+      "publishId": null
+    }
+  ],
+  "lastUpdated": "2026-03-15",
+  "nextId": 8
+}

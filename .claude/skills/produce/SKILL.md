@@ -1,12 +1,25 @@
 ---
 name: produce
 description: 根据素材清单组装生成最终视频，调用AI生图、TTS配音、字幕合成等工具完成视频制作。使用场景：素材准备完毕后需要组装视频时触发。
+argument-hint: "[选题ID|素材目录] [--account slug]"
 ---
 
 # /produce - 视频制作
 
 ## 描述
-根据素材清单，调用各类工具完成AI生图、TTS配音、字幕合成，最终组装为可发布的短视频。
+根据素材清单，生成AI生图指引、TTS配音、字幕合成指引，最终组装为可发布的短视频。
+
+## 账号感知
+
+本 Skill 在指定账号的上下文中运行：
+- 通过 `--account {slug}` 参数指定账号
+- 或使用当前会话中 `/account 切换` 设定的活跃账号
+- 如果 `data/matrix.json` 中只有一个 active 账号，自动使用该账号
+
+**账号上下文决定**：
+- 从 `accounts/{slug}/topics.json` 查找选题和素材路径
+- 从 `accounts/{slug}/account.json` 读取 TTS 配置和发布设置
+- 制作指引和输出存入 `accounts/{slug}/content/`
 
 ## 使用方式
 - `/produce {素材目录}` — 根据指定素材清单制作视频
@@ -16,109 +29,68 @@ description: 根据素材清单组装生成最终视频，调用AI生图、TTS�
 ## 执行流程
 
 ### 1. 读取素材清单
-- 读取 `content/materials/YYYY-MM-DD-{标题}/manifest.md`
+- 如果给了选题ID，在 `accounts/{slug}/topics.json` 中查找 `materialPath`
+- 读取 `accounts/{slug}/{materialPath}/manifest.md`
 - 检查所需素材的完备性
 - 如果有缺失素材，提示用户先运行 `/material` 补充
 
-### 2. AI生图
-对每个场景执行：
+### 2. AI生图指引
+对每个场景：
 - 读取 `prompts/scene-XX.txt` 中的提示词
-- 推荐用户使用以下工具生成图片（按推荐顺序）：
-  1. **即梦**（字节旗下，抖音生态内最佳适配）
-  2. **Midjourney**（品质最高）
-  3. **DALL-E / GPT-Image**（便捷性最高）
-  4. **Stable Diffusion**（本地免费）
-- 输出图片建议保存到 `content/materials/{标题}/images/scene-XX.png`
-- 检查所有图片的视觉一致性
-
-> **注意**：当前Claude Code无法直接调用生图API。此步骤输出详细的生图指引，用户需手动执行或通过外部工具完成。
+- 推荐工具：即梦 > Midjourney > DALL-E / GPT-Image > Stable Diffusion
+- 输出路径：`accounts/{slug}/content/materials/{标题}/images/scene-XX.png`
 
 ### 3. TTS配音
 - 读取 `tts-text.txt`
-- 推荐TTS工具：
-  1. **剪映TTS**（免费、中文效果最佳、可直接导入剪映项目）
-  2. **即梦语音**（字节旗下）
-  3. **Azure TTS**（多语言、高品质）
-  4. **Edge TTS**（免费、命令行可调用）
-- 如果用户环境安装了 edge-tts 或类似命令行工具，可尝试自动生成
-- 输出音频建议保存到 `content/materials/{标题}/audio/voiceover.mp3`
+- 从 `accounts/{slug}/account.json` 的 `tts` 字段获取推荐音色和语速
+- 推荐 TTS 工具（按优先级）：
+  1. **剪映TTS**（免费、中文最佳）
+  2. **Edge TTS**（命令行自动化）
+  3. **Azure TTS**（高品质）
+- 如果使用自动化脚本：`python scripts/assemble.py --account {slug} {topic-id}`
 
 ### 4. 配乐获取
-- 根据素材清单中的配乐需求：
-  - **抖音音乐库**：推荐搜索关键词，用户在剪映中搜索添加
-  - **Suno AI生成**：如果需要原创BGM，提供Suno生成提示词
-  - **免费素材站**：Pixabay Audio、Free Music Archive
-- 配乐保存到 `content/materials/{标题}/audio/bgm.mp3`
+- 推荐搜索关键词和来源
+- 配乐保存到 `accounts/{slug}/content/materials/{标题}/audio/bgm.mp3`
 
 ### 5. 视频组装指引
-输出详细的剪映/CapCut组装指引：
+输出详细的剪映/CapCut组装指引，或提示使用自动化脚本：
 
-```markdown
-## 剪映组装步骤
+```bash
+# 自动化组装（推荐）
+python scripts/assemble.py --account {slug} {topic-id}
 
-### 项目设置
-- 画布比例：9:16（竖屏）
-- 分辨率：1080x1920
-- 帧率：30fps
-
-### 轨道安排
-1. **图片轨**：按顺序导入场景图片，每张图展示时长参考脚本分镜
-2. **配音轨**：导入TTS配音文件
-3. **配乐轨**：导入BGM，音量调至配音的20-30%
-4. **字幕轨**：导入SRT字幕文件或使用剪映自动字幕
-
-### 转场效果
-- 图片之间使用{推荐转场}
-- 配合节奏切换画面
-
-### 图片动效
-- 每张图片添加"缩放"或"平移"动效，避免静态画面
-- Ken Burns效果（缓慢推拉+微小旋转）最适合AI图文
-
-### 字幕样式
-- 字体：思源黑体/阿里巴巴普惠体
-- 大小：适中，确保手机端可读
-- 位置：画面下方1/3处
-- 重点词加粗或变色
+# 前提：images/ 目录已放入场景图，可选 audio/bgm.mp3
 ```
+
+手动组装指引包括：项目设置、轨道安排、转场效果、图片动效、字幕样式。
 
 ### 6. 输出成品
-- 导出设置：1080x1920，30fps，H.264编码
-- 文件保存到 `content/output/YYYY-MM-DD-{标题}.mp4`
-- 生成发布元数据文件 `content/output/YYYY-MM-DD-{标题}-meta.md`：
+- 导出设置：1080x1920，30fps，H.264
+- 文件保存到 `accounts/{slug}/content/output/YYYY-MM-DD-{标题}.mp4`
+- 生成发布元数据 `accounts/{slug}/content/output/YYYY-MM-DD-{标题}-meta.md`：
+  - 从 `account.json` 读取 `publishing.defaultTags` 和 `publishing.bestTimes`
+  - 合并脚本中的话题标签
 
-```markdown
-## 发布信息
-- **标题**：{视频标题}
-- **描述**：{视频描述文案}
-- **话题标签**：{从脚本提取}
-- **封面建议**：{推荐使用哪个场景图作为封面}
-- **发布时间建议**：{根据赛道特征推荐}
-- **状态**：待发布
-```
+### 7. 更新选题状态
+- 将选题状态更新为 `produced`
+- 更新 `outputPath` 字段
 
-## 自动化程度说明
+## 自动化程度
 
 | 步骤 | 自动化程度 | 说明 |
 |------|-----------|------|
 | 素材清单解析 | 全自动 | Claude直接处理 |
-| AI生图提示词 | 全自动 | Claude生成优化后的prompt |
-| AI生图执行 | 需手动 | 需用户在即梦/MJ等工具中执行 |
-| TTS配音 | 半自动 | 命令行工具可自动，否则需手动 |
+| AI生图提示词 | 全自动 | Claude生成 |
+| AI生图执行 | 需手动 | 用户在即梦/MJ等工具中执行 |
+| TTS配音 | 自动化 | `assemble.py` 调用 edge-tts |
 | 配乐获取 | 需手动 | 用户在音乐库中搜索 |
-| 视频组装 | 需手动 | 用户在剪映中操作，按指引执行 |
+| 视频组装 | 自动化 | `assemble.py` 调用 FFmpeg |
 | 发布元数据 | 全自动 | Claude生成 |
 
-## 未来自动化计划
-当以下条件满足时，可提升自动化程度：
-- 集成即梦API → AI生图全自动
-- 集成Edge TTS命令行 → 配音全自动
-- 集成FFmpeg → 视频组装全自动
-- 集成抖音开放平台API → 发布全自动
-
 ## 注意事项
-- 视频首帧（封面）决定点击率，要选最吸引眼球的场景
-- AI生成的图片需人工检查，避免出现文字错误、违规内容
-- 配音语速建议每分钟200-250字（中文），太快听不清，太慢会掉完播
-- BGM音量不要盖过配音，建议配音:BGM = 7:3
-- 导出前通读一遍字幕，修正错别字和断句问题
+- 视频首帧（封面）决定点击率
+- AI生成的图片需人工检查
+- 配音语速建议每分钟200-250字
+- BGM音量不要盖过配音（配音:BGM = 7:3）
+- 导出前通读字幕，修正错别字
